@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageBasedSockets", "MessageBasedSockets.csproj", "{2264DDA9-B0E8-4FA7-88E0-FEE7652B0B6F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug BYTE2_CHAR|Any CPU = Debug BYTE2_CHAR|Any CPU
+		Release BYTE1_CHAR|Any CPU = Release BYTE1_CHAR|Any CPU
+		Release BYTE2_CHAR|Any CPU = Release BYTE2_CHAR|Any CPU
+		Debug BYTE1_CHAR|Any CPU = Debug BYTE1_CHAR|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2264DDA9-B0E8-4FA7-88E0-FEE7652B0B6F}.Debug BYTE2_CHAR|Any CPU.ActiveCfg = Debug BYTE2_CHAR|Any CPU
+		{2264DDA9-B0E8-4FA7-88E0-FEE7652B0B6F}.Debug BYTE2_CHAR|Any CPU.Build.0 = Debug BYTE2_CHAR|Any CPU
+		{2264DDA9-B0E8-4FA7-88E0-FEE7652B0B6F}.Release BYTE1_CHAR|Any CPU.ActiveCfg = Release BYTE1_CHAR|Any CPU
+		{2264DDA9-B0E8-4FA7-88E0-FEE7652B0B6F}.Release BYTE1_CHAR|Any CPU.Build.0 = Release BYTE1_CHAR|Any CPU
+		{2264DDA9-B0E8-4FA7-88E0-FEE7652B0B6F}.Release BYTE2_CHAR|Any CPU.ActiveCfg = Release BYTE2_CHAR|Any CPU
+		{2264DDA9-B0E8-4FA7-88E0-FEE7652B0B6F}.Release BYTE2_CHAR|Any CPU.Build.0 = Release BYTE2_CHAR|Any CPU
+		{2264DDA9-B0E8-4FA7-88E0-FEE7652B0B6F}.Debug BYTE1_CHAR|Any CPU.ActiveCfg = Debug BYTE1_CHAR|Any CPU
+		{2264DDA9-B0E8-4FA7-88E0-FEE7652B0B6F}.Debug BYTE1_CHAR|Any CPU.Build.0 = Debug BYTE1_CHAR|Any CPU
+	EndGlobalSection
+EndGlobal
