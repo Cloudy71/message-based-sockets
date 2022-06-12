@@ -4,11 +4,20 @@ using System.Net.Sockets;
 using MessageBasedSockets.Exceptions;
 
 namespace MessageBasedSockets {
+    /// <summary>
+    /// A class representing socket's messenger for client or server.
+    /// </summary>
     public class SocketMessenger {
+        /// <summary>
+        /// A delegate for message receive event.
+        /// </summary>
         public delegate void MessageReceived(IMessage message);
 
         internal static readonly int SegmentSize = ushort.MaxValue;
 
+        /// <summary>
+        /// An event for message receive.
+        /// </summary>
         public event MessageReceived OnMessageReceived;
 
         internal Socket Socket { get; }
@@ -29,6 +38,10 @@ namespace MessageBasedSockets {
             Socket = socket;
         }
 
+        /// <summary>
+        /// Sends message to this client.
+        /// </summary>
+        /// <param name="message">Message data</param>
         public void Send(ref IMessage message) {
             if (_sendFlag) {
                 _queue.Enqueue(message);
@@ -39,23 +52,15 @@ namespace MessageBasedSockets {
             SendForce(ref message);
         }
 
+        /// <summary>
+        /// Sends message to this client.
+        /// </summary>
+        /// <param name="message">Message data</param>
         public void Send(IMessage message) {
             Send(ref message);
         }
 
-        private void SendForce(ref IMessage message) {
-            var size = MessageWriter.Serialize(ref message, OutSegment);
-            _sendFlag = true;
-            Socket.BeginSend(
-                OutSegment,
-                0,
-                size,
-                SocketFlags.None,
-                ar => HandleSend(ar),
-                Socket
-            );
-        }
-
+        [Obsolete("Unfinished concept, do not use yet")]
         public void RegisterHandler<T>(Action<T> action) where T : IMessage {
             OnMessageReceived += message => {
                                      if (message is T msg)
@@ -63,6 +68,7 @@ namespace MessageBasedSockets {
                                  };
         }
 
+        [Obsolete("Unfinished concept, do not use yet")]
         public void ClearHandlers<T>() where T : IMessage {
         }
 
@@ -75,6 +81,19 @@ namespace MessageBasedSockets {
                 SocketFlags.None,
                 ar => HandleData(ar),
                 null
+            );
+        }
+
+        private void SendForce(ref IMessage message) {
+            var size = MessageWriter.Serialize(ref message, OutSegment);
+            _sendFlag = true;
+            Socket.BeginSend(
+                OutSegment,
+                0,
+                size,
+                SocketFlags.None,
+                ar => HandleSend(ar),
+                Socket
             );
         }
 

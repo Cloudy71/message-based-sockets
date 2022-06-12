@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 
 namespace MessageBasedSockets {
-    public static class TypeScanner {
+    internal static class TypeScanner {
         private static  byte                          _byteId           = 0;
         internal static Dictionary<Type, ScannedType> ScannedTypeByType = new();
 

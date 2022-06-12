@@ -1,7 +1,7 @@
 using System;
 
 namespace MessageBasedSockets {
-    public static class Logging {
+    internal static class Logging {
         private static Action<string> _actInfo;
         private static Action<string> _actError;
         private static Action<string> _actDebug;

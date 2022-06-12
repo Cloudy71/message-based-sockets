@@ -194,9 +194,6 @@ namespace MessageBasedSockets {
 
         private static int WriteStruct(ref Span<byte> span, int start, object v) {
             Type type = v.GetType();
-            // TypeScanner.ScannedTypeByType.TryGetValue(type, out var scannedType);
-            // if (scannedType == null)
-            //     throw new ApplicationException($"Unknown type {type.Name}");
             var scannedType = TypeScanner.ScannedTypeByType[type];
 
             int startDefault = start;

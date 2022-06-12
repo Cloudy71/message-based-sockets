@@ -206,9 +206,6 @@ namespace MessageBasedSockets {
 
         private static object ReadStruct(ref ArraySegment<byte> span, int start, Type type, out int len) {
             len = 0;
-            // TypeScanner.ScannedTypeByType.TryGetValue(type, out var scannedType);
-            // if (scannedType == null)
-            //     throw new ApplicationException($"Unknown type {type.Name}");
             var scannedType = TypeScanner.ScannedTypeByType[type];
             object obj = Activator.CreateInstance(type);
             foreach (var field in scannedType.Fields) {
