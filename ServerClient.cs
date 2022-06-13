@@ -7,7 +7,9 @@ namespace MessageBasedSockets {
     /// A class which represents the client connected to the server.
     /// Main usage is to use communication messenger made for this client socket.
     /// </summary>
-    public class ServerClient {
+    public class ServerClient : ISocket {
+        internal Server Server { get; }
+
         /// <summary>
         /// Revealed socket object of this connection.
         /// </summary>
@@ -18,9 +20,14 @@ namespace MessageBasedSockets {
         /// </summary>
         public SocketMessenger Messenger { get; }
 
-        internal ServerClient(Socket socket) {
+        internal ServerClient(Server server, Socket socket) {
+            Server = server;
             Socket = socket;
-            Messenger = new SocketMessenger(Socket);
+            Messenger = new SocketMessenger(this, Socket);
+        }
+
+        void ISocket.NotifyDisconnect(ISocket socket) {
+            Server.NotifyDisconnect((ServerClient)socket);
         }
     }
 }

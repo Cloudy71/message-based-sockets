@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using MessageBasedSockets.Messages;
@@ -6,7 +7,7 @@ using MessageBasedSockets.Types;
 using NUnit.Framework;
 
 namespace MessageBasedSockets {
-    public class Tests {
+    public class UnitTest1 {
         private static readonly string MessageHelloText = "Test message with id 0 and author set to \"Cloudy\".";
 
         private Server _server;
@@ -21,9 +22,15 @@ namespace MessageBasedSockets {
                 s => Console.Error.WriteLine(s),
                 s => Console.WriteLine($"DEBUG: {s}")
             );
+            IMessage.VisibilityMask = TypeAttributes.NotPublic;
             _server = new Server("localhost", 2011).Start();
             _client = new Client("localhost", 2011);
             _task = new TaskCompletionSource();
+
+            void OnConnectClientHandler() {
+                _task.SetResult();
+            }
+
             _client.OnConnect += OnConnectClientHandler;
             _client.Connect();
             _task.Task.Wait();
@@ -31,12 +38,21 @@ namespace MessageBasedSockets {
             Logging.Debug("Setup completed");
         }
 
-        private void OnConnectClientHandler() {
-            _task.SetResult();
-        }
 
         [Test]
+        // [Ignore("")]
         public void Test1ClientSendOneMessage() {
+            void OnMessageReceivedServerHandler(ServerClient client, IMessage message) {
+                Assert.That(message is MessageHello, Is.True);
+                var hello = (MessageHello)message;
+                Assert.Multiple(() => {
+                                    Assert.That(hello.Id, Is.EqualTo(0));
+                                    Assert.That(hello.Author, Is.EqualTo("Cloudy"));
+                                    Assert.That(hello.Message.Length, Is.EqualTo(MessageHelloText.Length));
+                                });
+                _task.SetResult();
+            }
+
             _task = new TaskCompletionSource();
             _server.OnClientMessageReceived += OnMessageReceivedServerHandler;
             _client.Messenger.Send(new MessageHello {
@@ -51,19 +67,39 @@ namespace MessageBasedSockets {
             Assert.Pass();
         }
 
-        private void OnMessageReceivedServerHandler(ServerClient client, IMessage message) {
-            Assert.True(message is MessageHello);
-            var hello = (MessageHello)message;
-            Assert.That(hello.Id, Is.EqualTo(0));
-            Assert.That(hello.Author, Is.EqualTo("Cloudy"));
-            Assert.That(hello.Message.Length, Is.EqualTo(MessageHelloText.Length));
-            _task.SetResult();
-        }
-
         [Test]
+        // [Ignore("")]
         public void Test2ClientSendThousandMessages() {
+            void OnThousandMessageReceivedServerHandler(ServerClient client, IMessage message) {
+                Assert.That(message is MessageData, Is.True);
+                var data = (MessageData)message;
+                Assert.Multiple(
+                    () => {
+                        Assert.That(data.X, Is.EqualTo(data.Index * 5f + .5f * data.Index));
+                        Assert.That(data.Y, Is.EqualTo(data.Index * 5f + .6f * data.Index));
+                        Assert.That(data.Z, Is.EqualTo(data.Index * 5f + .75f * data.Index));
+                        Assert.That(data.DoubleArray, Has.Length.EqualTo((int)data.Index));
+                        Assert.That(data.SByte, Is.EqualTo((sbyte)data.Index));
+                        Assert.That(data.Char, Is.EqualTo('\\'));
+                        Assert.That(data.StringArray, Has.Length.EqualTo((int)data.Index));
+                        foreach (var d in data.DoubleArray) {
+                            Assert.That(d, Is.EqualTo(5d));
+                        }
+
+                        foreach (var s in data.StringArray) {
+                            Assert.That(s, Is.EqualTo("abcdefghijklmnopqrstuvwxyz"));
+                        }
+                    }
+                );
+
+                if (data.Index != 999)
+                    return;
+
+                _task.SetResult();
+            }
+
             _task = new TaskCompletionSource();
-            _server.OnClientMessageReceived += OnHundredMessageReceivedServerHandler;
+            _server.OnClientMessageReceived += OnThousandMessageReceivedServerHandler;
             // This will mainly test the behavior of the engine if an overflow occurs.
             // Sending lot of big messages at once can easily overflow recipient's buffer.
             // This will as well test if signed and unsigned data types are cast correctly,
@@ -89,40 +125,40 @@ namespace MessageBasedSockets {
             if (!_task.Task.Wait(60000))
                 Assert.Fail();
 
-            _server.OnClientMessageReceived -= OnHundredMessageReceivedServerHandler;
+            _server.OnClientMessageReceived -= OnThousandMessageReceivedServerHandler;
             Assert.Pass();
         }
 
-        private void OnHundredMessageReceivedServerHandler(ServerClient client, IMessage message) {
-            Assert.That(message is MessageData, Is.True);
-            var data = (MessageData)message;
-            Assert.Multiple(
-                () => {
-                    Assert.That(data.X, Is.EqualTo(data.Index * 5f + .5f * data.Index));
-                    Assert.That(data.Y, Is.EqualTo(data.Index * 5f + .6f * data.Index));
-                    Assert.That(data.Z, Is.EqualTo(data.Index * 5f + .75f * data.Index));
-                    Assert.That(data.DoubleArray, Has.Length.EqualTo((int)data.Index));
-                    Assert.That(data.SByte, Is.EqualTo((sbyte)data.Index));
-                    Assert.That(data.Char, Is.EqualTo('\\'));
-                    Assert.That(data.StringArray, Has.Length.EqualTo((int)data.Index));
-                    foreach (var d in data.DoubleArray) {
-                        Assert.That(d, Is.EqualTo(5d));
-                    }
-
-                    foreach (var s in data.StringArray) {
-                        Assert.That(s, Is.EqualTo("abcdefghijklmnopqrstuvwxyz"));
-                    }
-                }
-            );
-
-            if (data.Index != 999)
-                return;
-
-            _task.SetResult();
-        }
-
         [Test]
+        // [Ignore("")]
         public void Test3ClientSendMessagesWithStruct() {
+            void OnMessageWithStructReceivedServerHandler(ServerClient client, IMessage message) {
+                Assert.That(message is MessageDataStruct, Is.True);
+                var data = (MessageDataStruct)message;
+                Assert.Multiple(
+                    () => {
+                        Assert.That(data.Data.X, Is.EqualTo(data.Data.Index * 5f));
+                        Assert.That(data.Data.Y, Is.EqualTo(data.Data.Index * 5f));
+                        Assert.That(data.Data.Z, Is.EqualTo(data.Data.Index * 5f));
+                        Assert.That(data.Data.DoubleArray, Has.Length.EqualTo((int)data.Data.Index));
+                        Assert.That(data.Data.StringArray, Has.Length.EqualTo((int)data.Data.Index));
+                        Assert.That(data.Vector.X, Is.EqualTo(data.Data.Index * .5f));
+                        Assert.That(data.Vector.Y, Is.EqualTo(data.Data.Index * .5f));
+                        Assert.That(data.Vector.Z, Is.EqualTo(data.Data.Index * .5f));
+                        Assert.That(data.DataArray, Has.Length.EqualTo((int)data.Data.Index));
+                        Assert.That(data.VectorArray, Has.Length.EqualTo((int)data.Data.Index));
+                        Assert.That(data.NestedData.Vector.X, Is.EqualTo(data.Data.Index * .6f));
+                        Assert.That(data.NestedData.Vector.Y, Is.EqualTo(data.Data.Index * .6f));
+                        Assert.That(data.NestedData.Vector.Z, Is.EqualTo(data.Data.Index * .6f));
+                        Assert.That(data.NestedData.VectorArray, Has.Length.EqualTo((int)data.Data.Index));
+                    }
+                );
+                if (data.Data.Index != 499)
+                    return;
+
+                _task.SetResult();
+            }
+
             _task = new TaskCompletionSource();
             _server.OnClientMessageReceived += OnMessageWithStructReceivedServerHandler;
 
@@ -165,35 +201,14 @@ namespace MessageBasedSockets {
             if (!_task.Task.Wait(10000))
                 Assert.Fail();
 
-            _server.OnClientMessageReceived -= OnHundredMessageReceivedServerHandler;
+            _server.OnClientMessageReceived -= OnMessageWithStructReceivedServerHandler;
             Assert.Pass();
         }
 
-        private void OnMessageWithStructReceivedServerHandler(ServerClient client, IMessage message) {
-            Assert.That(message is MessageDataStruct, Is.True);
-            var data = (MessageDataStruct)message;
-            Assert.Multiple(
-                () => {
-                    Assert.That(data.Data.X, Is.EqualTo(data.Data.Index * 5f));
-                    Assert.That(data.Data.Y, Is.EqualTo(data.Data.Index * 5f));
-                    Assert.That(data.Data.Z, Is.EqualTo(data.Data.Index * 5f));
-                    Assert.That(data.Data.DoubleArray, Has.Length.EqualTo((int)data.Data.Index));
-                    Assert.That(data.Data.StringArray, Has.Length.EqualTo((int)data.Data.Index));
-                    Assert.That(data.Vector.X, Is.EqualTo(data.Data.Index * .5f));
-                    Assert.That(data.Vector.Y, Is.EqualTo(data.Data.Index * .5f));
-                    Assert.That(data.Vector.Z, Is.EqualTo(data.Data.Index * .5f));
-                    Assert.That(data.DataArray, Has.Length.EqualTo((int)data.Data.Index));
-                    Assert.That(data.VectorArray, Has.Length.EqualTo((int)data.Data.Index));
-                    Assert.That(data.NestedData.Vector.X, Is.EqualTo(data.Data.Index * .6f));
-                    Assert.That(data.NestedData.Vector.Y, Is.EqualTo(data.Data.Index * .6f));
-                    Assert.That(data.NestedData.Vector.Z, Is.EqualTo(data.Data.Index * .6f));
-                    Assert.That(data.NestedData.VectorArray, Has.Length.EqualTo((int)data.Data.Index));
-                }
-            );
-            if (data.Data.Index != 499)
-                return;
-
-            _task.SetResult();
+        [OneTimeTearDown]
+        public void TearDown() {
+            _client.Disconnect();
+            _server.Stop();
         }
     }
 }

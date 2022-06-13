@@ -20,7 +20,8 @@ namespace MessageBasedSockets {
         /// </summary>
         public event MessageReceived OnMessageReceived;
 
-        internal Socket Socket { get; }
+        internal ISocket MainSocket { get; }
+        internal Socket  Socket     { get; }
 
         internal byte[] InSegment  { get; private set; }
         internal byte[] OutSegment { get; private set; }
@@ -30,11 +31,12 @@ namespace MessageBasedSockets {
         private Queue<IMessage> _queue        = new();
         private bool            _sendFlag     = false;
 
-        internal SocketMessenger(Socket socket) {
+        internal SocketMessenger(ISocket mainSocket, Socket socket) {
             socket.ReceiveBufferSize = SegmentSize;
             socket.SendBufferSize = SegmentSize;
             InSegment = new byte[socket.ReceiveBufferSize];
             OutSegment = new byte[socket.SendBufferSize];
+            MainSocket = mainSocket;
             Socket = socket;
         }
 
@@ -74,6 +76,7 @@ namespace MessageBasedSockets {
 
         internal void Start() {
             Logging.Debug("Waiting for message");
+            // try {
             Socket.BeginReceive(
                 InSegment,
                 _bufferOffset,
@@ -82,6 +85,7 @@ namespace MessageBasedSockets {
                 ar => HandleData(ar),
                 null
             );
+            // } catch ()
         }
 
         private void SendForce(ref IMessage message) {
@@ -100,6 +104,12 @@ namespace MessageBasedSockets {
         private void HandleData(IAsyncResult result) {
             int len = Socket.EndReceive(result) + _bufferOffset;
             _bufferOffset = 0;
+            if (len == 0) {
+                // Client has disconnected
+                MainSocket.NotifyDisconnect(MainSocket);
+                return;
+            }
+
             Logging.Debug($"Received {len} bytes, deserializing...");
             int offset = 0;
             while (offset < len) {

@@ -1,7 +1,9 @@
+using MessageBasedSockets.Attributes;
 using MessageBasedSockets.Types;
 
 namespace MessageBasedSockets.Messages {
-    public struct MessageDataStruct : IMessage {
+    [MessageId(2)]
+    internal struct MessageDataStruct : IMessage {
         public MessageData    Data;
         public MessageData[]  DataArray;
         public TestVector     Vector;

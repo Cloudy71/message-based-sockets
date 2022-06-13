@@ -8,7 +8,7 @@ namespace MessageBasedSockets {
     /// <summary>
     /// Client class used for creating a connection between this client and a server.
     /// </summary>
-    public class Client {
+    public class Client : ISocket {
         /// <summary>
         /// A delegate for server connection event.
         /// </summary>
@@ -105,9 +105,12 @@ namespace MessageBasedSockets {
         private void HandleConnect(IAsyncResult ar) {
             _socket.EndConnect(ar);
             Logging.Debug("CLIENT", "Connected to the server");
-            Messenger = new SocketMessenger(_socket);
+            Messenger = new SocketMessenger(this, _socket);
             Messenger.Start();
             OnConnect?.Invoke();
+        }
+
+        void ISocket.NotifyDisconnect(ISocket socket) {
         }
     }
 }

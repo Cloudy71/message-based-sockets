@@ -1,5 +1,9 @@
+using MessageBasedSockets.Attributes;
+using NUnit.Framework;
+
 namespace MessageBasedSockets.Messages {
-    public struct MessageData : IMessage {
+    [MessageId(1)]
+    internal struct MessageData : IMessage {
         public ulong    Index;
         public float    X;
         public float    Y;

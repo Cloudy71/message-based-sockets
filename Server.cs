@@ -74,9 +74,8 @@ namespace MessageBasedSockets {
         /// <returns>This object</returns>
         /// <exception cref="ApplicationException">If server is already listening</exception>
         public Server Start() {
-            if (_socket != null) {
+            if (_socket != null)
                 throw new ApplicationException("Server is already running.");
-            }
 
             IMessage.RegisterMessageTypes();
             IPHostEntry ipHostEntry = Dns.GetHostEntry(Ip);
@@ -87,7 +86,7 @@ namespace MessageBasedSockets {
 
             Logging.Debug("SERVER", "Starting server...");
             _socket.Bind(ipEndPoint);
-            _socket.Listen(100);
+            _socket.Listen(1000);
             Acceptor();
             Logging.Debug("SERVER", "Finished");
             return this;
@@ -98,12 +97,12 @@ namespace MessageBasedSockets {
         /// </summary>
         /// <exception cref="ApplicationException">If no connection has been made</exception>
         public void Stop() {
-            if (_socket == null) {
+            if (_socket == null)
                 throw new ApplicationException("Server is not running.");
-            }
 
             _socket.Close(0);
             _socket = null;
+            Clients.Clear();
             Logging.Debug("SERVER", "Stopped");
         }
 
@@ -136,7 +135,7 @@ namespace MessageBasedSockets {
         private void HandleAccept(IAsyncResult ar) {
             try {
                 Socket socket = _socket.EndAccept(ar);
-                ServerClient client = new ServerClient(socket);
+                ServerClient client = new ServerClient(this, socket);
                 Logging.Debug("SERVER", "Connection established");
                 Clients.Add(client);
                 client.Messenger.Start();
@@ -146,8 +145,12 @@ namespace MessageBasedSockets {
             }
             catch (Exception ex) {
                 Logging.Error(ex.Message);
-                Stop();
             }
+        }
+
+        internal void NotifyDisconnect(ServerClient socket) {
+            Clients.Remove(socket);
+            OnClientDisconnected?.Invoke(socket);
         }
     }
 }
